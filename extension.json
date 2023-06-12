@@ -78,13 +78,18 @@
 		"TitleMoveComplete": "FavoritesHooks::onTitleMoveComplete",
 		"ArticleDeleteComplete": "FavoritesHooks::onArticleDeleteComplete",
 		"SkinTemplateNavigation::Universal": "FavoritesHooks::onSkinTemplateNavigation__Universal",
-		"LoadExtensionSchemaUpdates": "FavoritesHooks::onLoadExtensionSchemaUpdates"
+		"LoadExtensionSchemaUpdates": "FavoritesHooks::onLoadExtensionSchemaUpdates",
+		"SkinAfterPortlet": "FavoritesHooks::onSkinAfterPortlet",
+		"SkinBuildSidebar": "FavoritesHooks::onSkinBuildSidebar"
 	},
 	"config": {
 		"FavoritesPersonalURL": {
 			"value": false
 		},
 		"UseIconFavorite": {
+			"value": false
+		},
+		"FavoritesListSidebar": {
 			"value": false
 		}
 	},

@@ -14,10 +14,11 @@ abstract class BaseAction extends Action {
 			MediaWikiServices::getInstance()
 				->getNamespaceInfo()
 				->getSubject( $title->getNamespace() );
-
+		
 		if ( $this->doAction( $dbw, $subject, $user, $title ) ) {
 			$out->addWikiMsg( $this->successMessage(), $title->getPrefixedText() );
 			$user->invalidateCache();
+			header("location: index.php/".$title);
 		} else {
 			$out->addWikiMsg( 'favoriteerrortext', $title->getPrefixedText() );
 		}

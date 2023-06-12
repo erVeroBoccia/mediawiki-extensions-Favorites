@@ -400,6 +400,8 @@ class ViewFavorites {
 	 * @return string
 	 */
 	private function buildRemoveLine( $title, $redirect ) {
+		global $wgSpecialFavoritesShowLink;
+		
 		// In case the user adds something unusual to their list using the raw editor
 		// We moved the Tools array completely into the "if( $title->exists() )" section.
 		$showlinks = false;
@@ -409,7 +411,7 @@ class ViewFavorites {
 		}
 
 		if ( $title->exists() ) {
-			$showlinks = true;
+			$showlinks = $wgSpecialFavoritesShowLink;
 			if ( $title->canHaveTalkPage() ) {
 				$tools[] = $this->mLinkRenderer->makeLink( $title->getTalkPage(), wfMessage( 'talkpagelinktext' )->text() );
 			}

@@ -1,8 +1,26 @@
 <?php
 
 // phpcs:disable MediaWiki.NamingConventions.LowerCamelFunctionsName.FunctionName
+//use Config;
+use MediaWiki\User\UserIdentity;
+use MediaWiki\User\UserIdentityValue;
+use MediaWiki\MediaWikiServices;
 
 class FavoritesHooks {
+	
+	/**
+	 * @var Config
+	 */
+	//private $config;
+	
+	/**
+	 * @param CategoryCache $categoryCache
+	 * @param Config $config
+	 */
+	//public function __construct( Config $config ) {
+	//	$this->config = $config;
+	//}
+	
 	/**
 	 * @param OutputPage &$out
 	 * @param Skin &$skin
@@ -92,12 +110,14 @@ class FavoritesHooks {
 	 */
 	public static function onSkinTemplateNavigation__Universal( $sktemplate, &$links ) {
 		global $wgFavoritesPersonalURL;
-
+		
 		if ( $wgFavoritesPersonalURL && $sktemplate->getUser()->isRegistered() ) {
 			$personal_urls = &$links['user-menu'];
+			//Qui forse posso mettere icona
 			$url[] = [
 				'text' => $sktemplate->msg( 'myfavoritelist' )->text(),
-				'href' => SpecialPage::getTitleFor( 'Favoritelist' )->getLocalURL()
+				'href' => SpecialPage::getTitleFor( 'Favoritelist' )->getLocalURL(),
+				'icon' => 'star'
 			];
 			$personal_urls = wfArrayInsertAfter( $personal_urls, $url, 'watchlist' );
 		}
@@ -106,5 +126,42 @@ class FavoritesHooks {
 		$favClass->favoritesLinks( $sktemplate, $links );
 
 		return true;
+	}
+	
+	/**
+	 * Hook implementation for injecting a favorites page list into the sidebar.
+	 * Only does anything if $wgFavoritesListOnSidebar is set to a true.
+	 * @param Skin $skin
+	 * @param array &$sidebar
+	 */
+	public static function onSkinBuildSidebar( $skin, &$sidebar ) {
+		global $wgFavoritesListOnSidebar;
+		
+		if ( $wgFavoritesListOnSidebar ) {
+			$html = Favorites::getFavouritesList($skin->getContext()->getUser());
+			if ( $html ) {
+				$sidebar['favoriteslist-portlet'] = [];
+			}
+		}
+	}
+
+	/**
+	 * Hook implementation for injecting a favorites page list link into the sidebar.
+	 * Only does anything if $wgFavoritesListOnSidebar is set to a true.
+	 * @param Skin $skin
+	 * @param string $portlet
+	 * @param string &$html
+	 */
+	public static function onSkinAfterPortlet( $skin, $portlet, &$html ) {
+		global $wgFavoritesListOnSidebar;
+		
+		if ( $wgFavoritesListOnSidebar ) {
+			if ( $portlet === 'favoriteslist-portlet' ) {
+				$box = Favorites::getFavouritesList($skin->getContext()->getUser());
+				if ( $box ) {
+					$html .= $box;
+				}
+			}
+		}
 	}
 }

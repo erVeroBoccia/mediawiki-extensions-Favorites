@@ -30,7 +30,11 @@
 		if ( addParams ) {
 			$.extend( params, addParams );
 		}
-		return this.post( params, { ok: ok, err: err } );
+		
+		alert(params)
+		console.log(params)
+		return false;
+		//return this.post( params, { ok: ok, err: err } );
 	}
 
 	$.extend( mw.Api.prototype, {
@@ -62,5 +66,12 @@
 		}
 
 	} );
-
+	
+	/**
+	* If favorites list is present on sidebar, it replace the name of the section
+	**/
+	if ($("#p-favoriteslist-portlet-label").length > 0){
+		$("#p-favoriteslist-portlet-label").text("Favorites");
+	}
+	
 }( mediaWiki, jQuery ) );

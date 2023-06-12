@@ -1,4 +1,6 @@
 <?php
+use MediaWiki\MediaWikiServices;
+
 class Favorites {
 	/** @var User */
 	private $user;
@@ -190,5 +192,100 @@ class Favorites {
 				'fl_namespace' => $oldnamespace,
 				'fl_title' => $oldtitle
 		], 'Database::delete' );
+	}
+	
+		/**
+	 * Build the part of the standard favoritelist editing form with the actual
+	 * title selection checkboxes and stuff.
+	 * Also generates a table of
+	 * contents if there's more than one heading.
+	 *
+	 * @param User $user
+	 * @return string
+	 */
+	public static function getFavouritesList( $user ) {
+		$list = "";
+		foreach ( self::getFavoritelistInfo( $user ) as $namespace => $pages ) {
+			$list .= "<ul>\n";
+			foreach ( $pages as $dbkey => $redirect ) {
+				$title = Title::makeTitleSafe( $namespace, $dbkey );
+				$list .= self::buildRemoveLine( $title, $redirect );
+			}
+			$list .= "</ul>\n";
+		}
+
+		return $list;
+	}
+	/**
+	 * Get a list of titles on a user's favoritelist, excluding talk pages,
+	 * and return as a two-dimensional array with namespace, title and
+	 * redirect status
+	 *
+	 * @param UserIdentity $user
+	 * @return array
+	 */
+	private static function getFavoritelistInfo( $user ) {
+		$titles = [];
+		$dbr = wfGetDB( DB_PRIMARY );
+		$uid = intval( $user->getId() );
+		list( $favoritelist, $page ) = $dbr->tableNamesN( 'favoritelist', 'page' );
+		$sql = "SELECT fl_namespace as page_namespace, fl_title as page_title, page_id, page_len, page_is_redirect, page_is_new, page_latest, page_touched, page_content_model
+			FROM {$favoritelist} LEFT JOIN {$page} ON ( fl_namespace = page_namespace
+			AND fl_title = page_title ) WHERE fl_user = {$uid}";
+		$res = $dbr->query( $sql, __METHOD__ );
+		if ( $res->numRows() > 0 ) {
+			$cache = MediaWikiServices::getInstance()->getLinkCache();
+			foreach ( $res as $row ) {
+				$title = Title::makeTitleSafe( $row->page_namespace, $row->page_title );
+				if ( $title instanceof Title ) {
+					// Update the link cache while we're at it
+					if ( $row->page_id ) {
+						$cache->addGoodLinkObjFromRow( $title, $row );
+					} else {
+						$cache->addBadLinkObj( $title );
+					}
+					// Ignore non-talk
+					if ( !$title->isTalkPage() ) {
+						$titles[$row->page_namespace][$row->page_title] = $row->page_is_redirect;
+					}
+				}
+			}
+		}
+		return $titles;
+	}
+
+	/**
+	 * Get the correct "heading" for a namespace
+	 *
+	 * @param int $namespace
+	 * @return string
+	 */
+	private static function getNamespaceHeading( $namespace ) {
+		return $namespace == NS_MAIN
+			? wfMessage( 'blanknamespace' )->text()
+			: htmlspecialchars( MediaWikiServices::getInstance()->getContentLanguage()->getFormattedNsText( $namespace ) );
+	}
+
+	/**
+	 * Build a single list item containing a check box selecting a title
+	 * and a link to that title, with various additional bits
+	 *
+	 * @param Title $title
+	 * @param bool $redirect
+	 * @return string
+	 */
+	private static function buildRemoveLine( $title, $redirect ) {
+		global $wgLang;
+		// In case the user adds something unusual to their list using the raw editor
+		// We moved the Tools array completely into the "if( $title->exists() )" section.
+		$showlinks = false;
+		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
+
+		$link = $linkRenderer->makeLink( $title );
+		if ( $redirect ) {
+			$link = '<span class="favoritelistredir">' . $link . '</span>';
+		}
+
+		return "<li>". $link . "</li>\n";
 	}
 }
